@@ -43,10 +43,32 @@ namespace ASPNETCOREFORM.Controllers
         [HttpPost]
         public string Post([FromBody]Test value)
         {
+
+            //Check if we have a value of Test
+            //return value.TestId.ToString();
+
             //Console.WriteLine(value.ItemName);
             using (var db = new InventoryContext())
             {
-                db.Inventories.Add(value);
+                if(String.IsNullOrEmpty(value.TestId.ToString()))
+                {
+                    db.Inventories.Add(value);
+
+                }else{
+                    var record = db.Inventories.Where(x => x.TestId == value.TestId).FirstOrDefault();
+                    
+                    // if(record.Count() > 0)
+                    //    return "One record";
+                    // else
+                    //     return "No Records";
+
+                    //return JsonConvert.SerializeObject(record).ToString();
+
+                    record.ItemName = value.ItemName;
+                    record.Quantity = value.Quantity;
+                    db.Inventories.Update(record);
+                }
+
                 db.SaveChanges();
             }
             return "DONE!";

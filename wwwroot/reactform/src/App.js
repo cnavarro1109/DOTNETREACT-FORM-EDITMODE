@@ -4,6 +4,7 @@ import './App.css';
 import { Button, FormGroup, Form, Col, ControlLabel, FormControl, Panel, Grid, Row, Table } from 'react-bootstrap';
 import serializeForm from 'form-serialize';
 
+import update from 'react-addons-update'; // ES6
 
 class App extends Component {
 
@@ -13,7 +14,8 @@ class App extends Component {
     this.state = {
       tableData: [],
       editMode: false,
-      editRecordData: []
+      editRecordData: [],
+      falseRecord: []
     };
 
     this._handleFormSubmit = this._handleFormSubmit.bind(this);
@@ -21,6 +23,7 @@ class App extends Component {
     this._deleteRecord = this._deleteRecord.bind(this);
     this._editRecord = this._editRecord.bind(this);
     this._loadEditRecord = this._loadEditRecord.bind(this);
+    this._handleChange = this._handleChange.bind(this);
   }
 
   componentDidMount() {
@@ -35,7 +38,7 @@ class App extends Component {
         return response.json();
       }).then(function (responseData) {
         console.log("LoadServiceAPI: " + responseData);
-        self.setState({tableData: responseData });
+        self.setState({ tableData: responseData });
       });
   }
 
@@ -67,7 +70,7 @@ class App extends Component {
 
     event.preventDefault();
     const recordId = event.target.value;
-    
+
     console.log("EDIT RECORD ID: " + recordId);
 
     self = this;
@@ -83,7 +86,6 @@ class App extends Component {
         self.setState({ editMode: true, editRecordData: responseData });
       });
 
-
   }
 
   /*
@@ -98,6 +100,20 @@ class App extends Component {
 
     var value = event.target.value;
     alert('Edit Record' + value);
+  }
+
+  _handleChange(event) {
+
+    var elementName = event.target.name;
+    var elementValue = event.target.value;
+
+    console.log(elementName + " : " + elementValue);
+
+    this.setState({
+      falseRecord: [],
+      //editRecordData: update(this.state.editRecordData, { 0: { elementName: { $set: elementValue } } })
+      editRecordData: update(this.state.editRecordData, { 1: { elementName: { $set: elementValue } } })
+    });
   }
 
   _handleFormSubmit(event) {
@@ -119,6 +135,9 @@ class App extends Component {
     }).then(function (res) {
       self._loadServiceAPIData(); //Reload the data
       console.log("End of Fetch: " + JSON.stringify(res))
+
+      //Reset the editMode value to false
+      self.setState({ editMode: false });
     });
 
   }
@@ -207,29 +226,60 @@ class App extends Component {
     */
     var editForm =
       Object.keys(dtRecordData).map(function (key) {
-        return (<div>
-          {dtRecordData[key]["itemName"]}
-          <br />
-          {dtRecordData[key]["quantity"]}
-           </div>);
-      })
+        return (
+          <Form horizontal onSubmit={self._handleFormSubmit}>
+
+            <FormGroup controlId="formHorizontalItemName">
+              <Col sm={10}>
+                <FormControl type="hidden" name="TestId" value={dtRecordData[key]["testId"]} onChange={self._handleChange} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup controlId="formHorizontalItemName">
+              <Col componentClass={ControlLabel} sm={2}>
+                Item Name
+          </Col>
+              <Col sm={10}>
+                <FormControl type="text" name="ItemName" placeholder="Item Name" value={dtRecordData[key]["itemName"]} onChange={self._handleChange} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup controlId="formHorizontalQuantity">
+              <Col componentClass={ControlLabel} sm={2}>
+                Quantity
+          </Col>
+              <Col sm={10}>
+                <FormControl type="text" name="Quantity" placeholder="Quantity" value={dtRecordData[key]["quantity"]} onChange={self._handleChange} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col smOffset={7} sm={8}>
+                <Button type="submit">
+                  Update
+            </Button>
+              </Col>
+            </FormGroup>
+
+          </Form>);
+      });
 
 
     var output = (
-        <div className="App">
-          <Grid>
-            <Row className="show-grid">
-              <Col xs={6} md={2}></Col>
-              <Col xs={6} md={8}>
-                <Panel>
-                  {formInstance}
-                </Panel>
-              </Col>
-            </Row>
-          </Grid>
-          {tableInstance}
-        </div>
-      );
+      <div className="App">
+        <Grid>
+          <Row className="show-grid">
+            <Col xs={6} md={2}></Col>
+            <Col xs={6} md={8}>
+              <Panel>
+                {formInstance}
+              </Panel>
+            </Col>
+          </Row>
+        </Grid>
+        {tableInstance}
+      </div>
+    );
 
     if (self.state.editMode == false) {
       output = (
